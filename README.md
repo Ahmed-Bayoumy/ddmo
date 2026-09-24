@@ -8,7 +8,7 @@
 
 📖 **Documentation:** <https://ahmed-bayoumy.github.io/ddmo/>
 
-**Data-Driven Models for Optimization** — lightweight surrogate models built on NumPy and SciPy.
+**Data-Driven Models for Optimization** — data-fit models built on NumPy and SciPy.
 
 `ddmo` fits cheap approximations of expensive functions (simulations, experiments) from a
 set of samples, so an optimizer can query the surrogate instead of the true function.
