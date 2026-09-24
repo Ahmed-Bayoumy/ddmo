@@ -38,6 +38,9 @@ docs/_build/
 docs/_autosummary/
 docs/generated/
 
+# Benchmark outputs (regenerated with `python BM/benchmark.py`)
+BM/results/
+
 # Trained surrogates exported from the dashboard or save_model()
 *.pkl
 *.joblib
