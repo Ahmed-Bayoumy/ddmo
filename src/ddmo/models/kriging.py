@@ -56,5 +56,3 @@ class Kriging(BaseSurrogateModel):
 
 class KrigingSurrogate(Kriging):
     """Backward-compatible alias matching the public naming used in the new package."""
-
-    pass

@@ -68,5 +68,3 @@ class RBF(BaseSurrogateModel):
 
 class RBFSurrogate(RBF):
     """Backward-compatible alias matching the public naming used in the new package."""
-
-    pass

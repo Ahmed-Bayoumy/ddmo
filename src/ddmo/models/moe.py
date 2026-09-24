@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -51,5 +51,3 @@ class MixtureOfExperts(BaseSurrogateModel):
 
 class MOE(MixtureOfExperts):
     """Backward-compatible alias for the original model name."""
-
-    pass

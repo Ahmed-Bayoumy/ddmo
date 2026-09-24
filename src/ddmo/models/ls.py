@@ -49,5 +49,3 @@ class LS(BaseSurrogateModel):
 
 class LinearSurrogate(LS):
     """Backward-compatible alias matching the public naming used in the new package."""
-
-    pass

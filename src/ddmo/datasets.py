@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from typing import Tuple
-
 import numpy as np
 
 
-def validate_xy(X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def validate_xy(X: np.ndarray, y: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     X = np.asarray(X, dtype=float)
     y = np.asarray(y, dtype=float).reshape(-1)
 

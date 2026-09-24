@@ -1,6 +1,6 @@
 import numpy as np
 
-from ddmo.models import Kriging, KrigingSurrogate, LS, LinearSurrogate, MOE, RBF, RBFSurrogate
+from ddmo.models import MOE, KrigingSurrogate, LinearSurrogate, RBFSurrogate
 
 
 def test_linear_surrogate_fit_predict():
