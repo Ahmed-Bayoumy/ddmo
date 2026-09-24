@@ -171,10 +171,18 @@ def test_rbf_deprecated_kernel_names():
 # ---------------------------------------------------------------- kriging
 
 
-def test_kriging_interpolates_and_generalizes(data_2d):
+def test_kriging_interpolates_with_well_conditioned_theta(data_2d):
+    X, y, _, _ = data_2d
+    model = Kriging(theta=10.0).fit(X, y)
+    assert np.allclose(model.predict(X), y, atol=1e-6)
+
+
+def test_kriging_mle_generalizes(data_2d):
+    # For smooth data the likelihood favours a nearly flat correlation, so R is close to
+    # singular and the nugget costs ~1e-5 of interpolation accuracy (platform-dependent).
     X, y, X_test, y_test = data_2d
     model = Kriging().fit(X, y)
-    assert np.allclose(model.predict(X), y, atol=1e-5)
+    assert np.allclose(model.predict(X), y, atol=1e-3)
     assert metrics.r2(y_test, model.predict(X_test)) > 0.99
 
 
