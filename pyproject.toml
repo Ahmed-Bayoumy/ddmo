@@ -1,6 +1,6 @@
 [project]
 name = "ddmo"
-version = "0.0.1"
+version = "2609.0"
 description = "DDMO: Data-Driven Models for Optimization"
 readme = "README.md"
 requires-python = ">=3.9"

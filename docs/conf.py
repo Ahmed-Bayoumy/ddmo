@@ -63,7 +63,7 @@ myst_enable_extensions = [
 ]
 
 html_theme = "furo"
-html_title = "ddmo"
+html_title = f"ddmo {release}"
 html_short_title = "ddmo"
 html_static_path = ["_static"]
 html_css_files = [
