@@ -143,6 +143,19 @@ class Kriging(BaseSurrogateModel):
         r = self._correlation(X, self._x_train_norm_, self.theta_)
         return self.beta_ + r @ self._alpha
 
+    def _gradient_impl(self, X: np.ndarray) -> np.ndarray:
+        # For p <= 1 the correlation has a kink where x_k equals a training x_k; 0 is used there.
+        Xt = self._x_train_norm_
+        weighted_r = self._correlation(X, Xt, self.theta_) * self._alpha  # (n, m)
+        grad = np.zeros_like(X)
+        for k in range(X.shape[1]):
+            diff = X[:, k, None] - Xt[None, :, k]
+            dcorr = np.zeros_like(diff)
+            nz = diff != 0
+            dcorr[nz] = self.p * np.abs(diff[nz]) ** (self.p - 1) * np.sign(diff[nz])
+            grad[:, k] = -self.theta_[k] * np.sum(weighted_r * dcorr, axis=1)
+        return grad
+
     def _std_impl(self, X: np.ndarray) -> np.ndarray:
         r = self._correlation(X, self._x_train_norm_, self.theta_)
         rinv_r = cho_solve(self._chol, r.T)

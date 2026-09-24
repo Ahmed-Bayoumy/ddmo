@@ -88,6 +88,10 @@ class WeightedEnsemble(BaseSurrogateModel):
         predictions = np.column_stack([expert.predict(X) for expert in self.experts])
         return predictions @ self.weights_
 
+    def _gradient_impl(self, X: np.ndarray) -> np.ndarray:
+        # The ensemble does not normalize, so X is in original units, as each expert expects.
+        return sum(w * expert.predict_gradient(X) for w, expert in zip(self.weights_, self.experts))
+
 
 MixtureOfExperts = WeightedEnsemble
 MOE = WeightedEnsemble

@@ -70,6 +70,17 @@ class BaseSurrogateModel(ABC):
         X = self._prepare_X_for_prediction(X)
         return np.asarray(self._predict_impl(X), dtype=float)
 
+    def predict_gradient(self, X: Any) -> np.ndarray:
+        """Gradient of the prediction with respect to the inputs, shape ``(n_samples, n_features)``.
+
+        Returned in the original (unnormalized) input units.
+        """
+        self._check_fitted()
+        Xn = self._prepare_X_for_prediction(X)
+        grad = np.asarray(self._gradient_impl(Xn), dtype=float)
+        # chain rule for the standardization z = (x - mean) / scale
+        return grad / self._x_scale if self.normalize else grad
+
     def score(self, X: Any, y: Any) -> float:
         """Coefficient of determination R^2 (higher is better)."""
         X, y = validate_xy(X, y)
@@ -82,3 +93,7 @@ class BaseSurrogateModel(ABC):
     @abstractmethod
     def _predict_impl(self, X: np.ndarray) -> np.ndarray:
         """Model-specific prediction logic."""
+
+    def _gradient_impl(self, X: np.ndarray) -> np.ndarray:
+        """Model-specific gradient with respect to the (normalized) inputs."""
+        raise NotImplementedError(f"{type(self).__name__} does not provide gradients.")

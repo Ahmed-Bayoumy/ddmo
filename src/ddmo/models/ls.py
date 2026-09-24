@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from .._utils import polynomial_features, polynomial_terms
+from .._utils import polynomial_features, polynomial_gradients, polynomial_terms
 from ..base import BaseSurrogateModel
 
 
@@ -63,6 +63,10 @@ class LS(BaseSurrogateModel):
 
     def _predict_impl(self, X: np.ndarray) -> np.ndarray:
         return self._design(X) @ self.coefficients_
+
+    def _gradient_impl(self, X: np.ndarray) -> np.ndarray:
+        dP = polynomial_gradients(X, self.terms_) / self._col_scale[None, :, None]
+        return np.einsum("nmd,m->nd", dP, self.coefficients_)
 
 
 LinearSurrogate = LS

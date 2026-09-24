@@ -5,7 +5,12 @@ import warnings
 import numpy as np
 from scipy.linalg import LinAlgError, inv, solve
 
-from .._utils import pairwise_distances, polynomial_features, polynomial_terms
+from .._utils import (
+    pairwise_distances,
+    polynomial_features,
+    polynomial_gradients,
+    polynomial_terms,
+)
 from ..base import BaseSurrogateModel
 
 # Minimum polynomial-tail degree for which the interpolation system is
@@ -95,6 +100,27 @@ class RBF(BaseSurrogateModel):
         out[pos] = r[pos] ** 2 * np.log(r[pos])
         return out
 
+    def _dphi_over_r(self, r: np.ndarray, gamma: float) -> np.ndarray:
+        """``phi'(r) / r``, so that grad phi(||x - c||) = (phi'(r) / r) * (x - c).
+
+        ``linear`` and ``thin_plate`` are not differentiable at their centres; the
+        (symmetric) subgradient 0 is used there.
+        """
+        k = self.kernel_
+        g2 = gamma**2
+        if k == "gaussian":
+            return -2.0 * g2 * np.exp(-g2 * r**2)
+        if k == "multiquadric":
+            return g2 / np.sqrt(1.0 + g2 * r**2)
+        if k == "inverse_multiquadric":
+            return -g2 * (1.0 + g2 * r**2) ** -1.5
+        if k == "cubic":
+            return 3.0 * r
+        out = np.zeros_like(r)
+        pos = r > 0
+        out[pos] = 1.0 / r[pos] if k == "linear" else 2.0 * np.log(r[pos]) + 1.0
+        return out
+
     def _system(self, D: np.ndarray, P: np.ndarray, gamma: float) -> np.ndarray:
         n, m = P.shape
         A = np.zeros((n + m, n + m))
@@ -169,6 +195,15 @@ class RBF(BaseSurrogateModel):
         D = pairwise_distances(X, self._x_train_norm_)
         tail = polynomial_features(X, self.terms_) @ self.poly_coefficients_
         return self._phi(D, self.gamma_) @ self.weights_ + tail
+
+    def _gradient_impl(self, X: np.ndarray) -> np.ndarray:
+        D = pairwise_distances(X, self._x_train_norm_)
+        coef = self._dphi_over_r(D, self.gamma_) * self.weights_  # (n, m)
+        radial = coef.sum(axis=1)[:, None] * X - coef @ self._x_train_norm_
+        tail = np.einsum(
+            "nmd,m->nd", polynomial_gradients(X, self.terms_), self.poly_coefficients_
+        )
+        return radial + tail
 
 
 RBFSurrogate = RBF

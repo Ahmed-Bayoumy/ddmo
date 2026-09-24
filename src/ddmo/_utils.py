@@ -32,3 +32,17 @@ def polynomial_features(X: np.ndarray, terms: list[tuple[int, ...]]) -> np.ndarr
         for i in term:
             out[:, j] *= X[:, i]
     return out
+
+
+def polynomial_gradients(X: np.ndarray, terms: list[tuple[int, ...]]) -> np.ndarray:
+    """Derivatives of the monomials in ``terms``, shape ``(n_samples, n_terms, n_features)``."""
+    out = np.zeros((X.shape[0], len(terms), X.shape[1]), dtype=float)
+    for j, term in enumerate(terms):
+        for k in set(term):
+            rest = list(term)
+            rest.remove(k)
+            deriv = np.full(X.shape[0], float(term.count(k)))
+            for i in rest:
+                deriv *= X[:, i]
+            out[:, j, k] = deriv
+    return out
