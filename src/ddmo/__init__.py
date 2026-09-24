@@ -16,7 +16,8 @@ from .models import (
 )
 from .persistence import ModelBundle, load_model, save_model
 
-__version__ = "0.0.1"
+# Keep in sync with [project].version in pyproject.toml (checked by tests/test_version.py).
+__version__ = "2609.0"
 __all__ = [
     "LS",
     "MOE",
