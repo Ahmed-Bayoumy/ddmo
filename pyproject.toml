@@ -5,10 +5,27 @@ description = "DDMO: Data-Driven Models for Optimization"
 readme = "README.md"
 requires-python = ">=3.9"
 authors = [{ name = "Ahmed H. Bayoumy", email = "ahmed.bayoumy@mail.mcgill.ca" }]
-license = "GPL-3.0-or-later"
-license-files = ["LICENSE"]
-
-[tool.uv.workspace]
-members = [
-    "ddmo",
+license = { text = "GPL-3.0-or-later" }
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0,<9.0",
+]
+
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
