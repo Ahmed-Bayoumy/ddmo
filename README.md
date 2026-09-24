@@ -12,7 +12,7 @@ All models share one scikit-learn-style interface: `fit(X, y)`, `predict(X)`, `s
 
 | Model | Class | Use it when |
 |---|---|---|
-| Polynomial least squares | `LS` | You want a smooth global trend or a response surface (degree 1–3), or the data is noisy. |
+| Polynomial least squares | `LS` | You want a smooth global trend or a response surface (degree 1–3), the data is noisy, or you want lasso to pick out the important inputs. |
 | Radial basis functions | `RBF` | You want an interpolant that passes through every sample and is fast to fit. |
 | Kriging (Gaussian process) | `Kriging` | You also need an uncertainty estimate, e.g. for expected improvement. |
 | Weighted ensemble | `WeightedEnsemble` | You want to average several models, optionally weighted by cross-validation error. |
@@ -63,16 +63,40 @@ and NaN or infinite values are rejected.
 ```python
 from ddmo import LS
 
-LS(degree=2)              # full quadratic: 1, x0, x1, x0^2, x0*x1, x1^2
-LS(degree=3, ridge=1e-3)  # cubic with ridge regularization
+LS(degree=2)                     # full quadratic: 1, x0, x1, x0^2, x0*x1, x1^2
+LS(degree=3, ridge=1e-3)         # cubic with ridge (L2) regularization
+LS(degree=2, lasso="auto")       # quadratic with lasso (L1), strength chosen by CV
+LS(lasso=1.0, ridge=0.1)         # elastic net
 ```
 
-- `degree`: total polynomial degree, including interaction terms. `degree=0` fits a constant.
-- `ridge`: L2 penalty. Basis columns are scaled first so every term is penalized equally;
-  the intercept is never penalized.
+The fitted coefficients minimize
 
-The model is solved with `numpy.linalg.lstsq`, so it stays stable when there are fewer
-samples than terms (it returns the minimum-norm solution).
+    1/2 ||y - A w||^2 + ridge/2 ||w||^2 + lasso ||w||_1
+
+where `A` is the polynomial basis with each non-constant column scaled to unit standard
+deviation (so every term is penalized equally) and the intercept is never penalized.
+
+- `degree`: total polynomial degree, including interaction terms. `degree=0` fits a constant.
+- `ridge`: L2 penalty. Shrinks coefficients smoothly; useful for noisy or correlated data.
+- `lasso`: L1 penalty. Sets the coefficients of uninformative terms exactly to zero, so the
+  model also performs feature selection. `"auto"` picks the value from a path of `n_lassos`
+  candidates by `n_folds`-fold cross-validation (see `lasso_`, `lasso_path_`, `cv_mse_`).
+- Penalties are summed over samples, so a given value is relatively weaker with more data.
+
+After fitting, `support_` is a boolean mask of the inputs used by at least one nonzero
+term and `selected_features_` lists their indices:
+
+```python
+rng = np.random.default_rng(1)
+X8 = rng.normal(size=(80, 8))
+y8 = 3 * X8[:, 0] - 2 * X8[:, 3] + 0.01 * rng.normal(size=80)
+
+LS(lasso=5.0).fit(X8, y8).selected_features_   # array([0, 3])
+```
+
+With `lasso=0` (the default) the model is solved with `numpy.linalg.lstsq`, so it stays
+stable when there are fewer samples than terms (it returns the minimum-norm solution).
+With `lasso > 0` it is solved by coordinate descent (`max_iter`, `tol`).
 
 ### `RBF` — radial basis function interpolation
 
@@ -142,6 +166,39 @@ ens.cv_mse_    # cross-validation MSE of each expert (weights="cv" only)
 
 The weights are the same everywhere in the input space (there is no gating network).
 The experts are fitted in place, so you can inspect them after fitting.
+
+## Feature selection
+
+`ddmo.feature_selection` detects inputs that are collinear or carry no information, so you
+can drop them before fitting. Constant columns are always dropped.
+
+```python
+from ddmo import CollinearityFilter, feature_selection
+
+rng = np.random.default_rng(2)
+a, b, c = rng.normal(size=(3, 100))
+Xc = np.column_stack([a, b, a + b, c])        # column 2 is a combination of 0 and 1
+yc = a - c
+
+feature_selection.variance_inflation_factors(Xc)   # [inf, inf, inf, ~1.0]
+feature_selection.vif_filter(Xc, threshold=10)     # array([0, 1, 3])
+feature_selection.correlation_filter(Xc, 0.95)     # pairwise |corr| filter
+feature_selection.lasso_select(Xc, yc)             # inputs kept by LS(lasso="auto")
+
+filt = CollinearityFilter(method="vif").fit(Xc)    # or method="correlation"
+filt.selected_features_, filt.dropped_features_    # [0, 1, 3], [2]
+model = Kriging().fit(filt.transform(Xc), yc)      # use the same filter on new data
+model.predict(filt.transform(Xc[:5]))
+```
+
+| Function | Drops a feature when |
+|---|---|
+| `correlation_filter(X, threshold=0.95)` | its absolute correlation with an already kept feature exceeds `threshold` (pairwise only). |
+| `vif_filter(X, threshold=10)` | it has the largest variance inflation factor and that VIF exceeds `threshold`; repeated until none do. Catches a feature that is a combination of several others. |
+| `lasso_select(X, y, lasso="auto", **ls_params)` | its lasso coefficient is zero, i.e. it does not help predict `y`. |
+
+Ties are resolved in favour of earlier columns. `CollinearityFilter` stores the result
+(`support_`, `selected_features_`, `dropped_features_`) and applies it with `transform`.
 
 ## Gradients
 

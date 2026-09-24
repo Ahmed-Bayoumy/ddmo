@@ -1,6 +1,8 @@
 """DDMO: Data-Driven Models for Optimization."""
 
+from . import feature_selection, metrics
 from .base import BaseSurrogateModel
+from .feature_selection import CollinearityFilter
 from .models import (
     LS,
     MOE,
@@ -19,6 +21,7 @@ __all__ = [
     "MOE",
     "RBF",
     "BaseSurrogateModel",
+    "CollinearityFilter",
     "Kriging",
     "KrigingSurrogate",
     "LinearSurrogate",
@@ -26,4 +29,6 @@ __all__ = [
     "RBFSurrogate",
     "WeightedEnsemble",
     "__version__",
+    "feature_selection",
+    "metrics",
 ]
