@@ -94,7 +94,10 @@ def test_ls_degree_zero_is_constant():
 
 def test_ls_quadratic_includes_interactions(data_2d):
     X, _, X_test, _ = data_2d
-    f = lambda Z: 1 + Z[:, 0] - 2 * Z[:, 1] + 3 * Z[:, 0] * Z[:, 1] + Z[:, 1] ** 2  # noqa: E731
+
+    def f(Z):
+        return 1 + Z[:, 0] - 2 * Z[:, 1] + 3 * Z[:, 0] * Z[:, 1] + Z[:, 1] ** 2
+
     model = LS(degree=2).fit(X, f(X))
     assert len(model.terms_) == 6
     assert np.allclose(model.predict(X_test), f(X_test), atol=1e-10)
@@ -131,7 +134,10 @@ def test_rbf_interpolates_and_generalizes(kernel, data_2d):
 def test_rbf_polynomial_reproduction(kernel):
     # With a degree-1 tail, a linear function is reproduced everywhere, including far away.
     X = np.random.default_rng(1).random((15, 2))
-    f = lambda Z: 1 + 2 * Z[:, 0] - Z[:, 1]  # noqa: E731
+
+    def f(Z):
+        return 1 + 2 * Z[:, 0] - Z[:, 1]
+
     model = RBF(kernel=kernel, degree=1, regularization=0.0).fit(X, f(X))
     far = np.array([[5.0, 5.0], [-3.0, 2.0]])
     assert np.allclose(model.predict(far), f(far), atol=1e-6)
