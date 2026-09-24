@@ -29,10 +29,11 @@ jobs:
           # Automatically uses the version from the matrix
           python-version: ${{ matrix.python-version }}
           enable-cache: true
+          cache-dependency-glob: pyproject.toml
 
       - name: Install dependencies
-        # uv sync will respect the python-version set by setup-uv
-        run: uv sync --frozen
+        # Sync from pyproject.toml because this repo does not commit a uv.lock file.
+        run: uv sync
 
       - name: ruff lint
         run: uvx ruff check .
