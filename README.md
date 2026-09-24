@@ -3,6 +3,9 @@
 [![Linux](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/lx-build-and-tests.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/lx-build-and-tests.yml)
 [![macOS](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/macos-build-and-pytest.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/macos-build-and-pytest.yml)
 [![Windows](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/win-build-and-pytest.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/win-build-and-pytest.yml)
+[![Docs](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/docs.yml/badge.svg?branch=DEV)](https://ahmed-bayoumy.github.io/ddmo/)
+
+📖 **Documentation:** <https://ahmed-bayoumy.github.io/ddmo/>
 
 **Data-Driven Models for Optimization** — lightweight surrogate models built on NumPy and SciPy.
 
