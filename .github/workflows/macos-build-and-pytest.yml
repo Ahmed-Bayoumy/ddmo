@@ -1,0 +1,52 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
+
+name: macos-build-and-pytest
+
+on:
+  push:
+    branches: [ "DEV" ]
+  pull_request:
+    branches: [ "DEV" ]
+
+permissions:
+  contents: read
+
+jobs:
+  macos-build-and-tests:
+    name: Python ${{ matrix.python-version }}
+    runs-on: macos-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install uv and set Python version
+        uses: astral-sh/setup-uv@v4
+        with:
+          # Automatically uses the version from the matrix
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
+      - name: Install dependencies
+        # Sync from pyproject.toml because this repo does not commit a uv.lock file.
+        run: uv sync
+
+      - name: ruff lint
+        run: uvx ruff check .
+
+      - name: Build package
+        run: uv build
+
+      - name: Install built wheel
+        run: |
+          uv pip install --find-links dist ddmo
+          uv pip install plotly matplotlib flake8 pytest pytest-cov
+
+      - name: Run tests
+        # Use 'uv run' to ensure the correct virtualenv is used
+        run: uv run pytest
