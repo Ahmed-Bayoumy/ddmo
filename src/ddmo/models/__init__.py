@@ -1,6 +1,6 @@
 from .kriging import Kriging, KrigingSurrogate
 from .ls import LS, LinearSurrogate
-from .moe import MOE, MixtureOfExperts
+from .moe import MOE, MixtureOfExperts, WeightedEnsemble
 from .rbf import RBF, RBFSurrogate
 
 __all__ = [
@@ -12,4 +12,5 @@ __all__ = [
     "LinearSurrogate",
     "MixtureOfExperts",
     "RBFSurrogate",
+    "WeightedEnsemble",
 ]
