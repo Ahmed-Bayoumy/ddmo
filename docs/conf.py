@@ -67,8 +67,10 @@ html_title = "ddmo"
 html_short_title = "ddmo"
 html_static_path = ["_static"]
 html_css_files = [
-    "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700"
-    "&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap",
+    (
+        "https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700"
+        "&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap"
+    ),
     "custom.css",
 ]
 html_favicon = "_static/favicon.svg"

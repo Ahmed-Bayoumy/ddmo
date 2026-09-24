@@ -24,6 +24,7 @@ cross-referenced with ``{numref}``. The original TeX is kept in a collapsible
 from __future__ import annotations
 
 import re
+from typing import ClassVar
 
 from docutils import nodes
 from docutils.parsers.rst import directives
@@ -297,7 +298,7 @@ def parse_algorithm(source: str) -> tuple[str | None, int, list[dict]]:
 
 class AlgorithmDirective(SphinxDirective):
     has_content = True
-    option_spec = {
+    option_spec: ClassVar[dict] = {
         "name": directives.unchanged,
         "class": directives.class_option,
         "caption": directives.unchanged,

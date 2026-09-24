@@ -6,11 +6,12 @@ physics model (analytic or numerical), sampled with a Latin hypercube design.
 Run:  python generate_datasets.py   -> writes ./datasets/*.csv
 """
 import os
+
 import numpy as np
 import pandas as pd
-from scipy.stats import qmc
 from scipy.sparse import lil_matrix
 from scipy.sparse.linalg import spsolve
+from scipy.stats import qmc
 
 OUT = "datasets"
 os.makedirs(OUT, exist_ok=True)
@@ -149,7 +150,6 @@ def gen_wing(n=2000, NM=24):
         CL = np.pi * AR * An[0]
         delta = np.sum(nn[1:] * (An[1:] / An[0]) ** 2) if abs(An[0]) > 1e-12 else 0.0
         CDi = CL**2 / (np.pi * AR) * (1 + delta)
-        e = 1 / (1 + delta)
         # sectional cl & root bending moment coefficient
         circ = 2 * np.sin(np.outer(theta, nn)) @ An  # Gamma/(b V)
         cl_sec = 2 * circ / chord
