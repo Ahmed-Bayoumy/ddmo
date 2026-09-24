@@ -3,6 +3,10 @@
 [![Linux](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/lx-build-and-tests.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/lx-build-and-tests.yml)
 [![macOS](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/macos-build-and-pytest.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/macos-build-and-pytest.yml)
 [![Windows](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/win-build-and-pytest.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/win-build-and-pytest.yml)
+[![Docs build](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/docs.yml/badge.svg?branch=DEV)](https://github.com/Ahmed-Bayoumy/ddmo/actions/workflows/docs.yml)
+[![Documentation](https://img.shields.io/badge/docs-github.io-0f766e?logo=readthedocs&logoColor=white)](https://ahmed-bayoumy.github.io/ddmo/)
+
+📖 **Documentation:** <https://ahmed-bayoumy.github.io/ddmo/>
 
 **Data-Driven Models for Optimization** — lightweight surrogate models built on NumPy and SciPy.
 
@@ -236,6 +240,52 @@ metrics.r2(y_true, y_pred)
 ```
 
 `model.score(X, y)` returns R².
+
+## Plotly dashboard (frontend)
+
+The repository now keeps frontend and backend app code in separate modules:
+
+- `src/ddmo_backend`: data loading, model construction, train/test split, and metric evaluation.
+- `src/ddmo_frontend`: Dash + Plotly UI for interactive model training and diagnostics.
+
+Install the UI extra and launch the dashboard:
+
+```bash
+pip install -e ".[ui]"
+ddmo-dashboard
+```
+
+In the dashboard, you can:
+
+- upload CSV data,
+- choose target and feature columns,
+- select a model (`LS`, `RBF`, `Kriging`, or `Weighted Ensemble`),
+- tune model hyperparameters,
+- train/evaluate with a train-test split,
+- inspect predicted-vs-actual and residual plots,
+- review model quality metrics (`R²`, `RMSE`, `MSE`) in a table,
+- download any trained model as a `.pkl` file ("Export trained model").
+
+## Saving and loading models
+
+Fitted models can be saved and reused later without retraining. Files are written with
+`pickle`, the same approach scikit-learn uses for persisting estimators, and also record
+the feature names, target name, ddmo version and any metadata you pass.
+
+```python
+from ddmo import Kriging, load_model, save_model
+
+model = Kriging().fit(X_train, y_train)
+save_model(model, "kriging.pkl", feature_names=["x1", "x2"], target_name="f")
+
+bundle = load_model("kriging.pkl")
+bundle.predict(X_new)          # NumPy array, or a DataFrame with the named columns
+bundle.predict_gradient(X_new)
+bundle.metadata                # e.g. hyperparameters and metrics for dashboard exports
+```
+
+Only load model files you trust: unpickling can run arbitrary code. `load_model` warns
+when the file was saved with a different ddmo version.
 
 ## Name aliases
 

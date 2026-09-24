@@ -1,0 +1,441 @@
+/* ddmo documentation theme, layered on top of Furo.
+   Furo's --color-* variables already switch with light/dark mode; the --ddmo-*
+   tokens below are redefined for dark mode at the bottom of this section. */
+
+body {
+  --ddmo-accent: #0f766e;
+  --ddmo-accent-2: #0e7490;
+  --ddmo-accent-soft: rgba(15, 118, 110, 0.08);
+  --ddmo-border: rgba(15, 23, 42, 0.09);
+  --ddmo-card: #ffffff;
+  --ddmo-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --ddmo-hero: linear-gradient(135deg, #f0fdfa 0%, #ecfeff 55%, #f8fafc 100%);
+  --ddmo-rule: #1f2937;
+  --ddmo-serif: "Latin Modern Roman", "CMU Serif", "Computer Modern Serif", "STIX Two Text", "Cambria", Georgia, serif;
+}
+
+body[data-theme="dark"] {
+  --ddmo-accent: #5eead4;
+  --ddmo-accent-2: #67e8f9;
+  --ddmo-accent-soft: rgba(94, 234, 212, 0.08);
+  --ddmo-border: rgba(226, 232, 240, 0.1);
+  --ddmo-card: #1a1c1e;
+  --ddmo-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --ddmo-hero: linear-gradient(135deg, rgba(15, 118, 110, 0.22) 0%, rgba(14, 116, 144, 0.14) 55%, transparent 100%);
+  --ddmo-rule: #cbd5e1;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) {
+    --ddmo-accent: #5eead4;
+    --ddmo-accent-2: #67e8f9;
+    --ddmo-accent-soft: rgba(94, 234, 212, 0.08);
+    --ddmo-border: rgba(226, 232, 240, 0.1);
+    --ddmo-card: #1a1c1e;
+    --ddmo-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.25);
+    --ddmo-hero: linear-gradient(135deg, rgba(15, 118, 110, 0.22) 0%, rgba(14, 116, 144, 0.14) 55%, transparent 100%);
+    --ddmo-rule: #cbd5e1;
+  }
+}
+
+/* ---------------------------------------------------------------- sidebar */
+
+.sidebar-brand {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.sidebar-logo-container {
+  margin: 0;
+}
+
+.sidebar-logo {
+  width: 2.1rem;
+  height: 2.1rem;
+}
+
+.sidebar-brand-text {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-tree .caption,
+.content .toctree-wrapper > p.caption {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------- typography */
+
+.content h1 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.content h2 {
+  margin-top: 2.6rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--ddmo-border);
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.content h3 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.content a.reference {
+  text-underline-offset: 0.18em;
+}
+
+/* ---------------------------------------------------------------- landing page */
+
+.ddmo-hero {
+  margin: 2.4rem 0 2rem;
+  padding: 2.2rem 2rem 2rem;
+  border: 1px solid var(--ddmo-border);
+  border-radius: 20px;
+  background: var(--ddmo-hero);
+}
+
+.ddmo-hero .eyebrow {
+  display: inline-block;
+  margin-bottom: 0.8rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  background: var(--ddmo-accent-soft);
+  color: var(--ddmo-accent);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* The page's Markdown title stays in the document for accessibility but the hero replaces it visually. */
+.content section > h1:has(+ .ddmo-hero) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.ddmo-hero .hero-title {
+  margin: 0 0 0.6rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-size: 2.6rem;
+  line-height: 1.1;
+}
+
+.ddmo-hero .hero-title .grad {
+  background: linear-gradient(90deg, var(--ddmo-accent), var(--ddmo-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ddmo-hero p.lead {
+  max-width: 40rem;
+  margin: 0 0 1.4rem;
+  color: var(--color-foreground-secondary);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.ddmo-hero .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.ddmo-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 10px;
+  border: 1px solid var(--ddmo-border);
+  background: var(--ddmo-card);
+  color: var(--color-foreground-primary) !important;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.ddmo-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--ddmo-shadow);
+}
+
+.ddmo-button.primary {
+  border-color: transparent;
+  background: linear-gradient(120deg, #0f766e, #0e7490);
+  color: #ffffff !important;
+}
+
+.ddmo-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin: 1.2rem 0 2rem;
+}
+
+a.ddmo-card {
+  display: block;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--ddmo-border);
+  border-radius: 16px;
+  background: var(--ddmo-card);
+  color: var(--color-foreground-primary) !important;
+  text-decoration: none !important;
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+a.ddmo-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--ddmo-accent);
+  box-shadow: var(--ddmo-shadow);
+}
+
+.ddmo-card .icon {
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  margin-bottom: 0.7rem;
+  border-radius: 10px;
+  background: var(--ddmo-accent-soft);
+  color: var(--ddmo-accent);
+  font-family: var(--ddmo-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.ddmo-card strong {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 1.02rem;
+}
+
+.ddmo-card span.desc {
+  color: var(--color-foreground-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ddmo-models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.4rem 0 1.5rem;
+}
+
+.ddmo-models span {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--ddmo-border);
+  border-radius: 999px;
+  background: var(--ddmo-card);
+  font-family: var(--font-stack--monospace);
+  font-size: 0.82rem;
+}
+
+/* ---------------------------------------------------------------- code, math, tables */
+
+.content .highlight,
+.content div[class*="highlight-"] pre {
+  border-radius: 12px;
+}
+
+.content div[class*="highlight-"] {
+  border: 1px solid var(--ddmo-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.content div.math {
+  margin: 1.2rem 0;
+  padding: 0.6rem 1rem;
+  border-left: 3px solid var(--ddmo-accent);
+  border-radius: 0 10px 10px 0;
+  background: var(--ddmo-accent-soft);
+  overflow-x: auto;
+}
+
+.content table.docutils {
+  border: 1px solid var(--ddmo-border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.content .admonition {
+  border-radius: 12px;
+  box-shadow: none;
+  border: 1px solid var(--ddmo-border);
+}
+
+/* API reference signatures */
+.content dl.py > dt {
+  padding: 0.45rem 0.7rem;
+  border-left: 3px solid var(--ddmo-accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--ddmo-accent-soft);
+}
+
+/* ---------------------------------------------------------------- algorithms
+   Mimics a compiled LaTeX algorithm float (algorithm + algpseudocode):
+   a heavy top rule, caption, thin rule, numbered pseudocode, thin bottom rule. */
+
+.algorithm {
+  margin: 2rem 0;
+  border-top: 2px solid var(--ddmo-rule);
+  border-bottom: 1px solid var(--ddmo-rule);
+  color: var(--color-foreground-primary);
+  font-family: var(--ddmo-serif);
+  font-size: 1.04rem;
+  line-height: 1.6;
+}
+
+.algorithm > p:first-child {
+  margin: 0;
+  padding: 0.3rem 0.15rem;
+  border-bottom: 1px solid var(--ddmo-rule);
+  font-family: var(--ddmo-serif);
+  font-size: inherit;
+  text-align: left;
+}
+
+.algorithm > p:first-child .caption-number {
+  margin-right: 0.3em;
+  font-weight: 700;
+}
+
+.algorithm > p:first-child .headerlink {
+  font-family: var(--font-stack);
+}
+
+.algorithm .alg-body {
+  padding: 0.4rem 0 0.45rem;
+  overflow-x: auto;
+}
+
+.algorithm .alg-line {
+  display: grid;
+  grid-template-columns: 1.9em minmax(0, 1fr);
+  column-gap: 0.7em;
+  align-items: baseline;
+}
+
+.algorithm .alg-lineno {
+  color: var(--color-foreground-muted);
+  font-size: 0.8em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Require/Ensure sit flush left with a hanging indent, as in algpseudocode. */
+.algorithm .alg-header {
+  display: block;
+  padding-left: 4.2em;
+  text-indent: -4.2em;
+}
+
+.algorithm .alg-header .alg-lineno {
+  display: none;
+}
+
+.algorithm .alg-indent-1 .alg-content { margin-left: 1.5em; }
+.algorithm .alg-indent-2 .alg-content { margin-left: 3em; }
+.algorithm .alg-indent-3 .alg-content { margin-left: 4.5em; }
+.algorithm .alg-indent-4 .alg-content { margin-left: 6em; }
+.algorithm .alg-indent-5 .alg-content { margin-left: 7.5em; }
+.algorithm .alg-indent-6 .alg-content { margin-left: 9em; }
+.algorithm .alg-indent-7 .alg-content { margin-left: 10.5em; }
+.algorithm .alg-indent-8 .alg-content { margin-left: 12em; }
+
+.algorithm .alg-keyword {
+  font-weight: 700;
+}
+
+.algorithm .alg-smallcaps {
+  font-variant: small-caps;
+  letter-spacing: 0.02em;
+}
+
+.algorithm .alg-comment {
+  float: right;
+  padding-left: 1.5em;
+  color: var(--color-foreground-secondary);
+}
+
+.algorithm code.literal {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 0.9em;
+}
+
+.algorithm mjx-container[jax="CHTML"] {
+  font-size: 100% !important;
+}
+
+/* Collapsible TeX source under each algorithm */
+.algorithm details.alg-source {
+  border-top: 1px dashed var(--ddmo-border);
+  font-family: var(--font-stack);
+  font-size: 0.85rem;
+}
+
+.algorithm details.alg-source > summary {
+  padding: 0.35rem 0.15rem;
+  color: var(--color-foreground-muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.algorithm details.alg-source > summary::-webkit-details-marker {
+  display: none;
+}
+
+.algorithm details.alg-source > summary::before {
+  content: "▸ ";
+}
+
+.algorithm details.alg-source[open] > summary::before {
+  content: "▾ ";
+}
+
+.algorithm details.alg-source > summary:hover {
+  color: var(--ddmo-accent);
+}
+
+.algorithm details.alg-source div[class*="highlight-"] {
+  margin: 0 0 0.8rem;
+}
+
+@media (max-width: 40em) {
+  .ddmo-hero {
+    padding: 1.4rem 1.1rem;
+  }
+
+  .ddmo-hero .hero-title {
+    font-size: 2rem;
+  }
+
+  .algorithm {
+    font-size: 0.96rem;
+  }
+
+  .algorithm .alg-comment {
+    float: none;
+    display: block;
+    padding-left: 0;
+  }
+}

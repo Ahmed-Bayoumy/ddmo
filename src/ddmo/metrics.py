@@ -20,6 +20,25 @@ def rmse(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return float(np.sqrt(mse(y_true, y_pred)))
 
 
+def mae(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    y_true, y_pred = _as_1d(y_true, y_pred)
+    return float(np.mean(np.abs(y_true - y_pred)))
+
+
+def mape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """Mean absolute percentage error in percent.
+
+    Values where ``y_true == 0`` are ignored to avoid division-by-zero blowups.
+    Returns 0.0 when all targets are zero.
+    """
+    y_true, y_pred = _as_1d(y_true, y_pred)
+    denom = np.abs(y_true)
+    mask = denom > 0.0
+    if not np.any(mask):
+        return 0.0
+    return float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / denom[mask])) * 100.0)
+
+
 def r2(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Coefficient of determination. Returns 1.0 for a perfect fit of constant data."""
     y_true, y_pred = _as_1d(y_true, y_pred)

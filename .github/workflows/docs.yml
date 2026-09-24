@@ -1,0 +1,59 @@
+# Build the Sphinx documentation and publish it to GitHub Pages:
+# https://ahmed-bayoumy.github.io/ddmo/
+# Pull requests only build the docs (to catch errors); pushes to DEV also deploy.
+
+name: docs
+
+on:
+  push:
+    branches: [ "DEV" ]
+  pull_request:
+    branches: [ "DEV" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never cancel a deployment that is already running, but skip queued ones.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install uv and set Python version
+        uses: astral-sh/setup-uv@v4
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: pyproject.toml
+
+      - name: Install documentation dependencies
+        run: uv sync --extra docs
+
+      - name: Build HTML
+        run: uv run sphinx-build -b html docs docs/_build/html
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build/html
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

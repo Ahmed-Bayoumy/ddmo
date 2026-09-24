@@ -1,6 +1,58 @@
-uv.lock
-*.pyc
+# Python bytecode and native extensions
 __pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Packaging and build outputs
 dist/
 build/
-*.egg-info
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+pip-wheel-metadata/
+
+# Environments and dependency locks (CI syncs from pyproject.toml)
+.venv/
+venv/
+env/
+.env
+uv.lock
+
+# Test, coverage, lint and type-check caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Sphinx build output (regenerated with `sphinx-build -b html docs docs/_build/html`)
+docs/_build/
+docs/_autosummary/
+docs/generated/
+
+# Trained surrogates exported from the dashboard or save_model()
+*.pkl
+*.joblib
+
+# Notebooks and logs
+.ipynb_checkpoints/
+*.log
+
+# Editors and IDEs
+.vscode/
+.idea/
+*.swp
+*~
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
