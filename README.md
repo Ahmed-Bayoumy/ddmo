@@ -143,6 +143,31 @@ ens.cv_mse_    # cross-validation MSE of each expert (weights="cv" only)
 The weights are the same everywhere in the input space (there is no gating network).
 The experts are fitted in place, so you can inspect them after fitting.
 
+## Gradients
+
+Every model provides the analytic gradient of its prediction with respect to the inputs,
+which you can pass to gradient-based optimizers:
+
+```python
+from scipy.optimize import minimize
+
+model = Kriging().fit(X, y)
+
+grad = model.predict_gradient(X_new)   # shape (n_samples, n_features), in original input units
+
+res = minimize(
+    lambda x: model.predict(x[None, :])[0],
+    x0=np.zeros(2),
+    jac=lambda x: model.predict_gradient(x[None, :])[0],
+    bounds=[(-1, 1), (-1, 1)],
+)
+```
+
+Gradients account for the internal input normalization, so they are always with respect to
+the inputs as you passed them. The `linear` and `thin_plate` RBF kernels, and Kriging with
+`p <= 1`, are not differentiable exactly at training points; the gradient contribution there
+is taken as 0.
+
 ## Metrics
 
 ```python
@@ -165,7 +190,7 @@ aliases of `LS`, `RBF`, `Kriging` and `WeightedEnsemble`. The RBF kernel names
 ## Limitations
 
 - Single-output models only.
-- No gradient predictions.
+- Gradients are available for the prediction, but not for the Kriging standard error.
 - Kriging and RBF build dense `n × n` matrices, so they suit up to a few thousand samples.
 
 ## License

@@ -251,3 +251,90 @@ def test_ensemble_weight_validation():
         MOE(experts=[LS(), LS()], weights=[1.0, -1.0]).fit(X, X[:, 0])
     with pytest.raises(ValueError, match="At least one"):
         MOE().fit(X, X[:, 0])
+
+
+# ---------------------------------------------------------------- gradients
+
+
+def finite_difference_gradient(model, X, h=1e-4):
+    # Fourth-order central differences: truncation error O(h^4) without pushing h into
+    # the range where round-off from ill-conditioned models dominates.
+    grad = np.zeros_like(X)
+    for k in range(X.shape[1]):
+        step = np.zeros(X.shape[1])
+        step[k] = h * max(1.0, np.abs(X[:, k]).max())
+        f = [model.predict(X + j * step) for j in (-2, -1, 1, 2)]
+        grad[:, k] = (f[0] - 8 * f[1] + 8 * f[2] - f[3]) / (12 * step[k])
+    return grad
+
+
+@pytest.fixture
+def data_scaled():
+    # Columns on very different scales to exercise the normalization chain rule.
+    rng = np.random.default_rng(7)
+    X = rng.uniform(-1, 1, size=(40, 2)) * np.array([1.0, 100.0])
+    y = np.sin(3 * X[:, 0]) + (X[:, 1] / 100) ** 2 + X[:, 0] * X[:, 1] / 100
+    X_eval = rng.uniform(-0.9, 0.9, size=(15, 2)) * np.array([1.0, 100.0])
+    return X, y, X_eval
+
+
+@pytest.mark.parametrize(
+    "make",
+    [
+        lambda: LS(degree=3),
+        lambda: LS(degree=2, ridge=1e-2, normalize=False),
+        lambda: RBF(kernel="gaussian", gamma=2.0),
+        lambda: RBF(kernel="multiquadric", gamma=1.5),
+        lambda: RBF(kernel="inverse_multiquadric", gamma=1.5),
+        lambda: RBF(kernel="linear"),
+        lambda: RBF(kernel="cubic", degree=2),
+        lambda: RBF(kernel="thin_plate"),
+        lambda: RBF(kernel="cubic", normalize=False),
+        lambda: Kriging(),
+        lambda: Kriging(theta=[3.0, 0.5], p=1.5),
+        lambda: Kriging(theta=[3.0, 3e-4], normalize=False),
+        lambda: MOE(experts=[LS(degree=2), RBF(kernel="cubic"), Kriging()], weights="cv"),
+    ],
+)
+def test_gradient_matches_finite_differences(make, data_scaled):
+    X, y, X_eval = data_scaled
+    model = make().fit(X, y)
+    grad = model.predict_gradient(X_eval)
+    assert grad.shape == X_eval.shape
+    fd = finite_difference_gradient(model, X_eval)
+    scale = np.abs(fd).max(axis=0)
+    assert np.allclose(grad / scale, fd / scale, atol=1e-5)
+
+
+def test_ls_gradient_is_exact():
+    X = np.random.default_rng(0).random((20, 2)) * 10
+
+    def f(Z):
+        return 1 + 2 * Z[:, 0] - Z[:, 1] + 0.5 * Z[:, 0] * Z[:, 1]
+
+    grad = LS(degree=2).fit(X, f(X)).predict_gradient([[1.0, 2.0], [3.0, -1.0]])
+    assert np.allclose(grad, [[2 + 0.5 * 2, -1 + 0.5 * 1], [2 + 0.5 * -1, -1 + 0.5 * 3]])
+
+
+def test_gradient_at_training_points_is_finite():
+    X = np.random.default_rng(3).random((12, 2))
+    y = X[:, 0] ** 2 - X[:, 1]
+    for model in (RBF(kernel="linear"), RBF(kernel="thin_plate"), Kriging(theta=1.0, p=1.0)):
+        assert np.all(np.isfinite(model.fit(X, y).predict_gradient(X)))
+
+
+def test_ensemble_gradient_is_weighted_sum():
+    X = np.random.default_rng(4).random((25, 2))
+    y = np.sin(3 * X[:, 0]) + X[:, 1]
+    ls, rbf = LS(degree=2), RBF(kernel="cubic")
+    model = MOE(experts=[ls, rbf], weights=[1.0, 3.0]).fit(X, y)
+    expected = 0.25 * ls.predict_gradient(X) + 0.75 * rbf.predict_gradient(X)
+    assert np.allclose(model.predict_gradient(X), expected)
+
+
+def test_gradient_validation():
+    with pytest.raises(RuntimeError, match="not been fitted"):
+        LS().predict_gradient([[0.0]])
+    model = LS().fit([[0.0], [1.0]], [0.0, 1.0])
+    with pytest.raises(ValueError, match="features"):
+        model.predict_gradient([[0.0, 1.0]])
