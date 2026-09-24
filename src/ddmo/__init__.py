@@ -10,6 +10,7 @@ from .models import (
     LinearSurrogate,
     MixtureOfExperts,
     RBFSurrogate,
+    WeightedEnsemble,
 )
 
 __version__ = "0.0.1"
@@ -23,5 +24,6 @@ __all__ = [
     "LinearSurrogate",
     "MixtureOfExperts",
     "RBFSurrogate",
+    "WeightedEnsemble",
     "__version__",
 ]

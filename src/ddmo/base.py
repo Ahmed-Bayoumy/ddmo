@@ -5,12 +5,16 @@ from typing import Any
 
 import numpy as np
 
+from .datasets import validate_X, validate_xy
+from .metrics import r2
+
 
 class BaseSurrogateModel(ABC):
     """Abstract base template for all surrogate models in ddmo.
 
-    Subclasses are expected to implement the training and prediction logic
-    while keeping the public interface consistent across models.
+    Subclasses implement ``_fit_impl`` and ``_predict_impl``, which receive
+    inputs that are already validated and (if ``normalize``) standardized with
+    statistics computed from the training data in ``fit``.
     """
 
     def __init__(self, *, name: str = "surrogate", normalize: bool = True):
@@ -24,52 +28,36 @@ class BaseSurrogateModel(ABC):
         self._x_mean = None
         self._x_scale = None
 
-    def _validate_inputs(self, X: Any, y: Any | None = None) -> tuple[np.ndarray, np.ndarray | None]:
-        X = np.asarray(X, dtype=float)
-        if X.ndim != 2:
-            raise ValueError("X must be a 2D array-like object.")
-
-        if y is not None:
-            y = np.asarray(y, dtype=float)
-            if y.ndim == 2 and y.shape[1] == 1:
-                y = y.ravel()
-            if y.ndim != 1:
-                raise ValueError("y must be a 1D array-like object or a column vector.")
-            if X.shape[0] != y.shape[0]:
-                raise ValueError("X and y must contain the same number of samples.")
-
-        return X, y
-
     def _normalize_features(self, X: np.ndarray) -> np.ndarray:
         if not self.normalize:
             return X
-
         if self._x_mean is None or self._x_scale is None:
-            self._x_mean = X.mean(axis=0)
-            self._x_scale = X.std(axis=0)
-            self._x_scale[self._x_scale == 0.0] = 1.0
-
+            raise RuntimeError("Normalization statistics are only available after fit.")
         return (X - self._x_mean) / self._x_scale
 
-    def _prepare_X_for_prediction(self, X: np.ndarray) -> np.ndarray:
-        X = np.asarray(X, dtype=float)
-        if X.ndim != 2:
-            raise ValueError("X must be a 2D array-like object.")
-        if self.n_features_in_ is not None and X.shape[1] != self.n_features_in_:
+    def _check_fitted(self) -> None:
+        if not self.is_fitted_:
+            raise RuntimeError(f"The model {self.name} has not been fitted yet.")
+
+    def _prepare_X_for_prediction(self, X: Any) -> np.ndarray:
+        X = validate_X(X)
+        if X.shape[1] != self.n_features_in_:
             raise ValueError(
                 f"X has {X.shape[1]} features but the model was trained on {self.n_features_in_}."
             )
-        return self._normalize_features(X) if self.normalize else X
+        return self._normalize_features(X)
 
     def fit(self, X: Any, y: Any):
-        X, y = self._validate_inputs(X, y)
+        X, y = validate_xy(X, y)
+        self.is_fitted_ = False
         self.n_features_in_ = X.shape[1]
         self.x_train_ = X.copy()
         self.y_train_ = y.copy()
 
-        self._x_mean = X.mean(axis=0)
-        self._x_scale = X.std(axis=0)
-        self._x_scale[self._x_scale == 0.0] = 1.0
+        if self.normalize:
+            self._x_mean = X.mean(axis=0)
+            self._x_scale = X.std(axis=0)
+            self._x_scale[self._x_scale == 0.0] = 1.0
 
         Xn = self._normalize_features(X)
         self._x_train_norm_ = Xn.copy()
@@ -78,17 +66,14 @@ class BaseSurrogateModel(ABC):
         return self
 
     def predict(self, X: Any) -> np.ndarray:
-        if not self.is_fitted_:
-            raise RuntimeError(f"The model {self.name} has not been fitted yet.")
-        X = self._prepare_X_for_prediction(np.asarray(X, dtype=float))
-        y_pred = self._predict_impl(X)
-        return np.asarray(y_pred, dtype=float)
+        self._check_fitted()
+        X = self._prepare_X_for_prediction(X)
+        return np.asarray(self._predict_impl(X), dtype=float)
 
     def score(self, X: Any, y: Any) -> float:
-        X, y = self._validate_inputs(X, y)
-        y_pred = self.predict(X)
-        residual = y - y_pred
-        return float(np.mean(residual ** 2))
+        """Coefficient of determination R^2 (higher is better)."""
+        X, y = validate_xy(X, y)
+        return r2(y, self.predict(X))
 
     @abstractmethod
     def _fit_impl(self, X: np.ndarray, y: np.ndarray):
