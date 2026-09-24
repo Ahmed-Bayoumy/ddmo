@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pytest
 
-from ddmo import metrics
+from ddmo import CollinearityFilter, feature_selection, metrics
 from ddmo.models import (
     LS,
     MOE,
@@ -283,6 +283,7 @@ def data_scaled():
     [
         lambda: LS(degree=3),
         lambda: LS(degree=2, ridge=1e-2, normalize=False),
+        lambda: LS(degree=2, lasso=1e-2, ridge=1e-3),
         lambda: RBF(kernel="gaussian", gamma=2.0),
         lambda: RBF(kernel="multiquadric", gamma=1.5),
         lambda: RBF(kernel="inverse_multiquadric", gamma=1.5),
@@ -338,3 +339,150 @@ def test_gradient_validation():
     model = LS().fit([[0.0], [1.0]], [0.0, 1.0])
     with pytest.raises(ValueError, match="features"):
         model.predict_gradient([[0.0, 1.0]])
+
+
+# ---------------------------------------------------------------- lasso option
+
+
+@pytest.fixture
+def sparse_data():
+    rng = np.random.default_rng(11)
+    X = rng.normal(size=(80, 8))
+    y = 3 * X[:, 0] - 2 * X[:, 3] + 0.01 * rng.normal(size=80)
+    return X, y
+
+
+def test_ls_lasso_recovers_sparse_support(sparse_data):
+    X, y = sparse_data
+    model = LS(lasso=5.0).fit(X, y)
+    assert list(model.selected_features_) == [0, 3]
+    assert model.score(X, y) > 0.99
+
+
+def test_ls_lasso_auto_keeps_informative_features(sparse_data):
+    X, y = sparse_data
+    model = LS(lasso="auto").fit(X, y)
+    assert {0, 3} <= set(model.selected_features_)
+    assert model.lasso_ in model.lasso_path_
+    assert model.score(X, y) > 0.99
+
+
+def test_ls_lasso_satisfies_kkt_conditions(sparse_data):
+    X, y = sparse_data
+    lasso, ridge = 20.0, 0.5
+    model = LS(lasso=lasso, ridge=ridge, normalize=False, tol=1e-12).fit(X, y)
+    A = model._design(X)
+    w = model.coefficients_[1:]
+    corr = (A[:, 1:] - A[:, 1:].mean(axis=0)).T @ (y - A @ model.coefficients_) - ridge * w
+    nz = w != 0
+    assert np.allclose(corr[nz], lasso * np.sign(w[nz]), atol=1e-6)
+    assert np.all(np.abs(corr[~nz]) <= lasso + 1e-6)
+
+
+def test_ls_lasso_zero_matches_plain_least_squares(sparse_data):
+    X, y = sparse_data
+    assert np.allclose(LS(lasso=0.0).fit(X, y).predict(X), LS().fit(X, y).predict(X))
+
+
+def test_ls_elastic_net_approaches_ridge_as_lasso_vanishes(sparse_data):
+    X, y = sparse_data
+    ridge = LS(ridge=5.0).fit(X, y).predict(X)
+    enet = LS(ridge=5.0, lasso=1e-9, tol=1e-12).fit(X, y).predict(X)
+    assert np.allclose(ridge, enet, atol=1e-6)
+
+
+def test_ls_large_lasso_gives_constant_model(sparse_data):
+    X, y = sparse_data
+    model = LS(lasso=1e6).fit(X, y)
+    assert model.selected_features_.size == 0
+    assert np.allclose(model.predict(X), y.mean())
+
+
+def test_ls_lasso_with_duplicated_inputs_matches_deduplicated_fit():
+    # With exact duplicates the lasso optimum is not unique (any split between the copies
+    # is optimal), but the fitted function is. CollinearityFilter removes such columns.
+    rng = np.random.default_rng(5)
+    x = rng.normal(size=(60, 2))
+    X = np.column_stack([x[:, 0], x[:, 0], x[:, 1]])  # column 1 duplicates column 0
+    y = 2 * x[:, 0] + x[:, 1]
+    dup = LS(lasso=1.0, tol=1e-12).fit(X, y)
+    ref = LS(lasso=1.0, tol=1e-12).fit(x, y)
+    assert np.allclose(dup.predict(X), ref.predict(x), atol=1e-8)
+    assert dup.coefficients_[1] + dup.coefficients_[2] == pytest.approx(ref.coefficients_[1])
+    assert list(CollinearityFilter(method="correlation").fit(X).selected_features_) == [0, 2]
+
+
+def test_ls_lasso_selects_interaction_term():
+    X = np.random.default_rng(6).uniform(-1, 1, size=(80, 3))
+    y = X[:, 0] * X[:, 1]
+    model = LS(degree=2, lasso=5.0).fit(X, y)
+    nonzero = [t for t, c in zip(model.terms_[1:], model.coefficients_[1:]) if c != 0]
+    assert nonzero == [(0, 1)]
+    assert list(model.selected_features_) == [0, 1]
+
+
+def test_ls_lasso_validation():
+    X = np.random.default_rng(0).random((10, 2))
+    with pytest.raises(ValueError, match="lasso must be"):
+        LS(lasso=-1.0).fit(X, X[:, 0])
+    with pytest.raises(ValueError, match="lasso must be"):
+        LS(lasso="cv").fit(X, X[:, 0])
+
+
+# ---------------------------------------------------------------- feature selection
+
+
+@pytest.fixture
+def collinear_X():
+    rng = np.random.default_rng(8)
+    x0, x1, x3 = rng.normal(size=(3, 100))
+    # column 2 is an exact combination of 0 and 1; column 4 is constant
+    return np.column_stack([x0, x1, x0 + x1, x3, np.full(100, 2.0)])
+
+
+def test_variance_inflation_factors(collinear_X):
+    vif = feature_selection.variance_inflation_factors(collinear_X)
+    assert np.all(np.isinf(vif[:3]))
+    assert vif[3] < 1.2
+    assert np.isnan(vif[4])
+    independent = np.random.default_rng(9).normal(size=(200, 3))
+    assert np.all(feature_selection.variance_inflation_factors(independent) < 1.1)
+
+
+def test_vif_filter_drops_combination_and_constant(collinear_X):
+    assert list(feature_selection.vif_filter(collinear_X)) == [0, 1, 3]
+
+
+def test_correlation_filter_drops_near_duplicates():
+    rng = np.random.default_rng(10)
+    x0, x2 = rng.normal(size=(2, 100))
+    X = np.column_stack([x0, 2 * x0 + 1e-3 * rng.normal(size=100), x2])
+    assert list(feature_selection.correlation_filter(X, threshold=0.99)) == [0, 2]
+    assert list(feature_selection.correlation_filter(X, threshold=1.0)) == [0, 1, 2]
+
+
+def test_lasso_select(sparse_data):
+    X, y = sparse_data
+    assert list(feature_selection.lasso_select(X, y, lasso=5.0)) == [0, 3]
+    with pytest.raises(ValueError, match="positive"):
+        feature_selection.lasso_select(X, y, lasso=0.0)
+
+
+def test_collinearity_filter_pipeline(collinear_X):
+    y = collinear_X[:, 0] - collinear_X[:, 3]
+    filt = CollinearityFilter(method="vif").fit(collinear_X)
+    assert list(filt.selected_features_) == [0, 1, 3]
+    assert list(filt.dropped_features_) == [2, 4]
+    Xs = filt.transform(collinear_X)
+    assert Xs.shape == (100, 3)
+    model = LS().fit(Xs, y)
+    assert model.score(filt.transform(collinear_X), y) == pytest.approx(1.0)
+
+    corr = CollinearityFilter(method="correlation").fit(collinear_X)
+    assert 4 not in corr.selected_features_
+    with pytest.raises(ValueError, match="features"):
+        filt.transform(collinear_X[:, :3])
+    with pytest.raises(ValueError, match="method"):
+        CollinearityFilter(method="pca").fit(collinear_X)
+    with pytest.raises(RuntimeError, match="not been fitted"):
+        CollinearityFilter().transform(collinear_X)
