@@ -1,0 +1,14 @@
+[project]
+name = "ddmo"
+version = "0.0.1"
+description = "DDMO: Data-Driven Models for Optimization"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{ name = "Ahmed H. Bayoumy", email = "ahmed.bayoumy@mail.mcgill.ca" }]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+
+[tool.uv.workspace]
+members = [
+    "ddmo",
+]
