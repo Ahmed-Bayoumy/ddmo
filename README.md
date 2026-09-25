@@ -10,6 +10,26 @@
 
 **Data-Driven Models for Optimization** — data-fit models built on NumPy and SciPy.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/figures/readme/showcase_dark.png">
+  <img alt="ddmo surrogates on NACA 4-digit airfoils: Kriging trained on 100 panel-method runs predicts the lift-to-drag ratio of 271 unseen airfoils with R² = 0.999; test error falls about 20-fold from 25 to 400 training samples; LS and RBF train in milliseconds, Kriging and the ensemble in seconds." src="docs/figures/readme/showcase_light.png">
+</picture>
+
+**Swap an expensive simulation for a surrogate trained on a few hundred runs.** On a NACA 4-digit
+airfoil study (6 inputs: camber, thickness, angle of attack, Mach, Reynolds number):
+
+- 🎯 **Accurate on unseen designs:** trained on only **100** panel-method runs, Kriging predicts the
+  lift-to-drag ratio of **271 unseen airfoils with R² = 0.999**.
+- 📉 **Sample-efficient:** median test error falls about **20×** from 25 to 400 training runs.
+  With 200 runs, every model reaches a median R² ≥ 0.9998 on lift, drag, moment and L/D.
+- ⚡ **Fast to train:** at 200 runs, a fit takes **2 ms** (LS), **0.1 s** (RBF) or **3.5–10 s**
+  (Kriging, ensemble) per output, with one interface for all four.
+- 🔬 **Benchmarked, not promised:** across seven engineering problems and 4080 fits, Kriging and the
+  ensemble meet strict accuracy criteria on 33 of 51 outputs. See the
+  [benchmark results](https://ahmed-bayoumy.github.io/ddmo/benchmark_results.html).
+
+<sub>Figure: <code>python BM/showcase.py</code> (5 seeds, tuned settings per model; fit times measured with 24 fits in parallel).</sub>
+
 `ddmo` fits cheap approximations of expensive functions (simulations, experiments) from a
 set of samples, so an optimizer can query the surrogate instead of the true function.
 All models share one scikit-learn-style interface: `fit(X, y)`, `predict(X)`, `score(X, y)`.
