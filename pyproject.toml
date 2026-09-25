@@ -23,6 +23,10 @@ docs = [
     "sphinx>=8.0; python_version >= '3.10'",
     "sphinx-copybutton>=0.5.2; python_version >= '3.10'",
 ]
+bench = [
+    "matplotlib>=3.7",
+    "pandas>=2.1",
+]
 ui = [
     "dash>=2.18",
     "pandas>=2.1",

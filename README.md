@@ -287,6 +287,28 @@ bundle.metadata                # e.g. hyperparameters and metrics for dashboard 
 Only load model files you trust: unpickling can run arbitrary code. `load_model` warns
 when the file was saved with a different ddmo version.
 
+## Benchmarking
+
+`BM/benchmark.py` benchmarks every model on the seven engineering datasets in
+[`BM/datasets`](BM/datasets/README.md). Each fit uses a random training subsample (one per seed)
+at several training-set sizes, and is scored on the fixed test split. All fits
+run in parallel, one process per core.
+
+```bash
+pip install -e ".[bench]"
+python BM/benchmark.py            # 5 seeds x sizes 50/100/200, all cores
+python BM/benchmark.py --quick    # smoke test, about a minute
+python BM/benchmark.py --train-sizes 50 100 200 400   # adds n=400: about 2 h on 24 cores
+python BM/benchmark.py --help     # datasets, models, seeds, sizes, thresholds, --strict
+```
+
+Each output passes when the median over seeds at the largest size meets
+R² ≥ 0.90, NRMSE ≤ 0.10 and NMAX ≤ 0.30. Results go to `BM/results/`:
+
+- `report.md` with the pass matrix and failing outputs
+- CSV files with raw and aggregated metrics
+- plots: learning curves (mean, median and a ±1 s.d. band), box plots per output, a pass matrix and an R² overview
+
 ## Name aliases
 
 `LinearSurrogate`, `RBFSurrogate`, `KrigingSurrogate`, `MixtureOfExperts` and `MOE` are

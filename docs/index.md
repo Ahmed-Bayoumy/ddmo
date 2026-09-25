@@ -39,6 +39,11 @@
     <strong>Tutorials</strong>
     <span class="desc">Compare models, screen features, export trained models and drive optimizers with gradients.</span>
   </a>
+  <a class="ddmo-card" href="benchmark_results.html">
+    <div class="icon">▦</div>
+    <strong>Benchmarks</strong>
+    <span class="desc">4080 fits on seven engineering problems: pass rates, learning curves, cost and robustness.</span>
+  </a>
 </div>
 
 ```{toctree}
@@ -51,6 +56,15 @@ theory
 backend
 tutorials
 api
+```
+
+```{toctree}
+:maxdepth: 2
+:caption: Benchmarks
+:hidden:
+
+benchmark_setup
+benchmark_results
 ```
 
 ## Highlights
